@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reuniões">
+<meta name="theme-color" content="#1c1917">
+<link rel="manifest" href="manifest_kalender.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231c1917'/%3E%3Ctext y='68' x='50' text-anchor='middle' font-size='55' font-family='serif'%3E📅%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reuniões – Kalender</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', -apple-system, sans-serif; background: #faf8f4; color: #1c1917; }
+
+header { background: #1c1917; color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; position: sticky; top: 0; z-index: 50; }
+header h1 { font-size: 16px; font-weight: 600; }
+.tz-toggle { display: flex; gap: 4px; }
+.tz-btn { border: 1px solid rgba(255,255,255,.3); border-radius: 6px; padding: 5px 10px; font-size: 12px; background: transparent; color: rgba(255,255,255,.7); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tz-btn.active { background: white; color: #1c1917; font-weight: 600; }
+
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: white; border-bottom: 1px solid #e2ddd6; }
+.nav-btn { background: #f0ece4; border: none; border-radius: 8px; padding: 8px 20px; font-size: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.month-title { font-size: 18px; font-weight: 600; }
+
+.view-bar { display: flex; gap: 6px; padding: 10px 16px; background: white; border-bottom: 1px solid #e2ddd6; }
+.view-btn { border: 1px solid #e2ddd6; border-radius: 8px; padding: 7px 16px; font-size: 13px; background: #faf8f4; color: #78716c; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.view-btn.active { background: #1c1917; color: white; border-color: #1c1917; font-weight: 500; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; background: white; border-bottom: 1px solid #e2ddd6; }
+.lpill { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #78716c; background: #f0ece4; border-radius: 20px; padding: 4px 10px 4px 7px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.lpill.off { opacity: 0.3; }
+.ldot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* AGENDA */
+#agenda-view { padding: 12px 16px; display: flex; flex-direction: column; gap: 0; }
+.day-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f0ece4; }
+.date-col { width: 48px; flex-shrink: 0; text-align: center; }
+.date-num { font-size: 22px; font-weight: 700; line-height: 1; color: #1c1917; }
+.date-num.today { color: #d97706; }
+.date-wd { font-size: 10px; color: #78716c; margin-top: 2px; }
+.ev-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ev-row { display: flex; align-items: center; gap: 8px; border-radius: 8px; padding: 9px 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ev-dot2 { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ev-name2 { font-size: 14px; font-weight: 600; flex: 1; }
+.ev-time2 { font-size: 11px; opacity: 0.75; flex-shrink: 0; text-align: right; white-space: pre-line; line-height: 1.4; }
+.add-btn-small { background: none; border: none; font-size: 12px; color: #78716c; padding: 4px 0; cursor: pointer; text-align: left; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+/* GRID */
+#grid-view { padding: 0; }
+.grid-header { display: grid; grid-template-columns: repeat(7,1fr); background: #f0ece4; border-bottom: 1px solid #e2ddd6; }
+.gh { text-align: center; font-size: 10px; font-weight: 600; color: #78716c; padding: 6px 0; text-transform: uppercase; }
+.grid-body { display: flex; flex-direction: column; }
+.grid-week { display: grid; grid-template-columns: repeat(7,1fr); border-bottom: 1px solid #e2ddd6; }
+.grid-week:last-child { border-bottom: none; }
+.gcell { border-right: 1px solid #e2ddd6; padding: 4px 3px; min-height: 70px; background: white; position: relative; }
+.gcell:last-child { border-right: none; }
+.gcell.other { background: #f8f7f4; }
+.gcell.today-cell { background: #fffbeb; }
+.gday-num { font-size: 11px; color: #78716c; margin-bottom: 2px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; }
+.gday-num.today { color: #d97706; font-weight: 700; background: #fef3c7; }
+.gchip { display: flex; align-items: center; gap: 3px; border-radius: 4px; padding: 2px 4px; margin-bottom: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gchip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.gchip-name { font-size: 9px; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.gchip-time { font-size: 8px; opacity: 0.7; }
+
+.hidden { display: none !important; }
+
+/* MODAL */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; }
+.overlay.open { display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); }
+.mhandle { width: 36px; height: 4px; background: #e2ddd6; border-radius: 2px; margin: 12px auto 0; }
+.mhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; }
+.mhead h3 { font-size: 17px; font-weight: 600; }
+.mclose { background: none; border: none; font-size: 24px; color: #78716c; cursor: pointer; padding: 4px; -webkit-tap-highlight-color: transparent; }
+.mbody { padding: 4px 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.flabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #78716c; margin-bottom: 6px; }
+.mbody input, .mbody select, .mbody textarea { width: 100%; padding: 12px 14px; border: 1px solid #e2ddd6; border-radius: 10px; font-size: 16px; font-family: inherit; background: #faf8f4; -webkit-appearance: none; outline: none; }
+.mbody textarea { min-height: 70px; resize: vertical; }
+.mbody input:focus, .mbody select:focus, .mbody textarea:focus { border-color: #93c5fd; background: white; }
+.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mactions { display: flex; gap: 8px; padding-top: 4px; }
+.btn-save { flex: 1; padding: 14px; background: #1c1917; color: white; border: none; border-radius: 12px; font-size: 16px; font-family: inherit; font-weight: 600; cursor: pointer; }
+.btn-cancel { padding: 14px 16px; background: #f0ece4; color: #1c1917; border: none; border-radius: 12px; font-size: 16px; font-family: inherit; cursor: pointer; }
+.btn-del { padding: 14px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 12px; font-size: 16px; font-family: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Reuniões – Kalender</h1>
+  </div>
+  <div class="tz-toggle">
+    <button class="tz-btn active" id="tz-both" onclick="setTz('both')">CET+GMT</button>
+    <button class="tz-btn" id="tz-cet" onclick="setTz('cet')">CET</button>
+    <button class="tz-btn" id="tz-gmt" onclick="setTz('gmt')">GMT</button>
+  </div>
+</header>
+
+<div class="nav">
+  <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
+  <span class="month-title" id="month-title"></span>
+  <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+</div>
+
+<div class="view-bar">
+  <button class="view-btn" id="vbtn-grid" onclick="setView('grid')">📅 Kalender</button>
+  <button class="view-btn active" id="vbtn-agenda" onclick="setView('agenda')">☰ Agenda</button>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div id="agenda-view"></div>
+<div id="grid-view" class="hidden"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mhead">
+      <h3 id="modal-title">Bearbeiten</h3>
+      <button class="mclose" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="mbody">
+      <div><div class="flabel">Name</div><input type="text" id="e-name"></div>
+      <div><div class="flabel">Thema / Tema</div><textarea id="e-tema" placeholder="z.B. Karma, Prosperidade..."></textarea></div>
+      <div><div class="flabel">Língua</div>
+        <select id="e-lang">
+          <option>Português</option><option>Alemão</option><option>Francês</option><option>English</option>
+        </select>
+      </div>
+      <div class="time-row">
+        <div><div class="flabel">Start CET</div><input type="time" id="e-start"></div>
+        <div><div class="flabel">Ende CET</div><input type="time" id="e-end"></div>
+      </div>
+      <div><div class="flabel">Farbe</div>
+        <select id="e-color">
+          <option value="guido">🔵 Guido</option>
+          <option value="sonia">🟠 Sonia</option>
+          <option value="grace">🟣 Grace</option>
+          <option value="cleusa">🟢 Cleusa</option>
+          <option value="sni">🔴 SNI Jovens</option>
+        </select>
+      </div>
+      <div class="mactions">
+        <button class="btn-del" id="btn-del" onclick="deleteEvent()">🗑</button>
+        <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+        <button class="btn-save" onclick="saveEvent()">✓ Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DNS=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const DNL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const BGCOL={guido:'#eff6ff',sonia:'#fff7ed',grace:'#f5f3ff',cleusa:'#ecfdf5',sni:'#fef2f2'};
+const BDCOL={guido:'#bfdbfe',sonia:'#fed7aa',grace:'#ddd6fe',cleusa:'#a7f3d0',sni:'#fecaca'};
+const DOTCOL={guido:'#3b82f6',sonia:'#f97316',grace:'#8b5cf6',cleusa:'#10b981',sni:'#ef4444'};
+const TXTCOL={guido:'#1e3a8a',sonia:'#7c2d12',grace:'#4c1d95',cleusa:'#064e3b',sni:'#7f1d1d'};
+
+let tz='both', curView='agenda';
+let curYear=new Date().getFullYear(), curMonth=new Date().getMonth();
+let editingId=null, modalMode='edit', addCtx=null;
+
+function loadEvents(){
+  const s=localStorage.getItem('rev5_events');
+  if(s) return JSON.parse(s);
+  return [
+    {id:'guido', name:'Guido', lang:'Alemão',    color:'guido',  startCET:'11:00',endCET:'',     tema:'',freq:'weekly',     wday:0},
+    {id:'sonia', name:'Sonia', lang:'Português', color:'sonia',  startCET:'20:30',endCET:'22:00',tema:'',freq:'weekly',     wdays:[2,3]},
+    {id:'grace', name:'Grace', lang:'Francês',   color:'grace',  startCET:'10:00',endCET:'11:30',tema:'',freq:'monthly-nth',wday:0,nth:3},
+    {id:'cleusa',name:'Cleusa',lang:'Português', color:'cleusa', startCET:'21:15',endCET:'',     tema:'',freq:'weekly',     wday:2},
+    {id:'sni',   name:'SNI Jovens Europa',lang:'Português',color:'sni',startCET:'20:00',endCET:'21:30',tema:'',freq:'monthly-last-thu-fri'},
+  ];
+}
+function loadOvr(){const s=localStorage.getItem('rev5_ovr');return s?JSON.parse(s):{};}
+
+let events=loadEvents(), overrides=loadOvr();
+let hidden=new Set(JSON.parse(localStorage.getItem('rev5_hidden')||'[]'));
+
+function save(){
+  localStorage.setItem('rev5_events',JSON.stringify(events));
+  localStorage.setItem('rev5_ovr',JSON.stringify(overrides));
+  localStorage.setItem('rev5_hidden',JSON.stringify([...hidden]));
+}
+
+function cet2gmt(t){
+  if(!t)return'';
+  const[h,m]=t.split(':').map(Number);
+  let g=h-1;if(g<0)g+=24;
+  return g.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0');
+}
+function fmtT(s,e){
+  if(!s)return'';
+  const cet=s+(e?'–'+e:''), gmt=cet2gmt(s)+(e?'–'+cet2gmt(e):'');
+  if(tz==='cet')return cet+' CET';
+  if(tz==='gmt')return gmt+' GMT';
+  return cet+' CET\n'+gmt+' GMT';
+}
+
+function lastWd(y,mo,wd){let d=new Date(y,mo+1,0);while(d.getDay()!==wd)d.setDate(d.getDate()-1);return d;}
+function nthWd(y,mo,wd,nth){let c=0,d=new Date(y,mo,1);while(d.getMonth()===mo){if(d.getDay()===wd){c++;if(c===nth)return d;}d.setDate(d.getDate()+1);}return null;}
+
+function getOccs(year,month){
+  const res=[], dim=new Date(year,month+1,0).getDate();
+  events.forEach(ev=>{
+    let days=[];
+    if(ev.freq==='weekly'){const wd=ev.wdays||[ev.wday];for(let d=1;d<=dim;d++)if(wd.includes(new Date(year,month,d).getDay()))days.push(d);}
+    else if(ev.freq==='monthly-nth'){const nd=nthWd(year,month,ev.wday,ev.nth);if(nd)days.push(nd.getDate());}
+    else if(ev.freq==='monthly-last-thu-fri'){days.push(lastWd(year,month,4).getDate(),lastWd(year,month,5).getDate());}
+    days.forEach(d=>{
+      const key=`${year}-${month}-${d}-${ev.id}`;
+      const ov=overrides[key];
+      if(ov&&ov.deleted)return;
+      res.push({key,date:d,eventId:ev.id,name:ov?.name??ev.name,lang:ov?.lang??ev.lang,color:ov?.color??ev.color,startCET:ov?.startCET??ev.startCET,endCET:ov?.endCET??ev.endCET,tema:ov?.tema??ev.tema??''});
+    });
+  });
+  Object.values(overrides).forEach(ov=>{
+    if(ov.movedFrom&&ov.year===year&&ov.month===month&&!ov.deleted&&!res.find(r=>r.key===ov.key))
+      res.push({key:ov.key,date:ov.date,eventId:ov.eventId,name:ov.name,lang:ov.lang,color:ov.color,startCET:ov.startCET,endCET:ov.endCET,tema:ov.tema||''});
+  });
+  res.sort((a,b)=>a.date-b.date||(a.startCET||'').localeCompare(b.startCET||''));
+  return res;
+}
+
+function setTz(t){tz=t;['both','cet','gmt'].forEach(id=>document.getElementById('tz-'+id).classList.toggle('active',id===t));render();}
+function changeMonth(d){curMonth+=d;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}render();}
+function setView(v){
+  curView=v;
+  ['grid','agenda'].forEach(x=>{
+    document.getElementById('vbtn-'+x).classList.toggle('active',x===v);
+    document.getElementById(x+'-view').classList.toggle('hidden',x!==v);
+  });
+  render();
+}
+
+function renderLegend(){
+  const leg=document.getElementById('legend');leg.innerHTML='';
+  events.forEach(ev=>{
+    const p=document.createElement('div');
+    p.className='lpill'+(hidden.has(ev.id)?' off':'');
+    p.innerHTML=`<span class="ldot" style="background:${DOTCOL[ev.color]}"></span>${ev.name}`;
+    p.onclick=()=>{hidden.has(ev.id)?hidden.delete(ev.id):hidden.add(ev.id);save();renderLegend();render();};
+    leg.appendChild(p);
+  });
+}
+
+function render(){
+  document.getElementById('month-title').textContent=MN[curMonth]+' '+curYear;
+  if(curView==='agenda')renderAgenda();
+  else renderGrid();
+}
+
+function renderAgenda(){
+  const el=document.getElementById('agenda-view');
+  el.innerHTML='';
+  const today=new Date();
+  const dim=new Date(curYear,curMonth+1,0).getDate();
+  const occs=getOccs(curYear,curMonth);
+  let hasAny=false;
+
+  for(let d=1;d<=dim;d++){
+    const dayOccs=occs.filter(o=>o.date===d&&!hidden.has(o.eventId));
+    const wd=new Date(curYear,curMonth,d).getDay();
+    const isToday=d===today.getDate()&&curMonth===today.getMonth()&&curYear===today.getFullYear();
+    if(!dayOccs.length&&!isToday)continue;
+    hasAny=true;
+
+    const row=document.createElement('div');
+    row.className='day-row';
+
+    // Date col
+    const dc=document.createElement('div');
+    dc.className='date-col';
+    dc.innerHTML=`<div class="date-num${isToday?' today':''}">${d}</div><div class="date-wd">${DNS[wd]}</div>`;
+    row.appendChild(dc);
+
+    // Events col
+    const ec=document.createElement('div');
+    ec.className='ev-col';
+
+    dayOccs.forEach(occ=>{
+      const er=document.createElement('div');
+      er.className='ev-row';
+      er.style.background=BGCOL[occ.color]||'#f5f5f5';
+      er.style.border=`1px solid ${BDCOL[occ.color]||'#ddd'}`;
+      const t=fmtT(occ.startCET,occ.endCET);
+      er.innerHTML=`<span class="ev-dot2" style="background:${DOTCOL[occ.color]}"></span><span class="ev-name2" style="color:${TXTCOL[occ.color]}">${occ.name}</span><span class="ev-time2" style="color:${TXTCOL[occ.color]}">${t}</span>`;
+      er.onclick=()=>openEdit(occ.key);
+      ec.appendChild(er);
+    });
+
+    const ab=document.createElement('button');
+    ab.className='add-btn-small';
+    ab.textContent='+ hinzufügen';
+    ab.onclick=()=>openAdd(d,curMonth,curYear);
+    ec.appendChild(ab);
+
+    row.appendChild(ec);
+    el.appendChild(row);
+  }
+
+  if(!hasAny){
+    el.innerHTML='<p style="text-align:center;color:#ccc;padding:40px;font-style:italic;">Keine Ereignisse</p>';
+  }
+}
+
+function renderGrid(){
+  const el=document.getElementById('grid-view');
+  el.innerHTML='';
+  const today=new Date();
+  const fd=new Date(curYear,curMonth,1).getDay();
+  const dim=new Date(curYear,curMonth+1,0).getDate();
+  const pdim=new Date(curYear,curMonth,0).getDate();
+  const occs=getOccs(curYear,curMonth);
+
+  const gh=document.createElement('div');
+  gh.className='grid-header';
+  gh.innerHTML=['So','Mo','Di','Mi','Do','Fr','Sa'].map(d=>`<div class="gh">${d}</div>`).join('');
+  el.appendChild(gh);
+
+  const gb=document.createElement('div');gb.className='grid-body';
+  const cells=[];
+  for(let i=0;i<42;i++){
+    let day,mo,yr,other=false;
+    if(i<fd){day=pdim-fd+1+i;mo=curMonth-1;yr=curYear;if(mo<0){mo=11;yr--;}other=true;}
+    else if(i-fd>=dim){day=i-fd-dim+1;mo=curMonth+1;yr=curYear;if(mo>11){mo=0;yr++;}other=true;}
+    else{day=i-fd+1;mo=curMonth;yr=curYear;}
+    cells.push({day,mo,yr,other});
+  }
+  for(let row=0;row<6;row++){
+    if(row===5&&cells.slice(35).every(c=>c.other))break;
+    const wk=document.createElement('div');wk.className='grid-week';
+    for(let col=0;col<7;col++){
+      const c=cells[row*7+col];
+      const isT=!c.other&&c.day===today.getDate()&&curMonth===today.getMonth()&&curYear===today.getFullYear();
+      const cell=document.createElement('div');
+      cell.className='gcell'+(c.other?' other':'')+(isT?' today-cell':'');
+      cell.innerHTML=`<span class="gday-num${isT?' today':''}">${c.day}</span>`;
+      if(!c.other){
+        occs.filter(o=>o.date===c.day&&!hidden.has(o.eventId)).forEach(occ=>{
+          const ch=document.createElement('div');
+          ch.className='gchip';
+          ch.style.background=BGCOL[occ.color];
+          ch.innerHTML=`<span class="gchip-dot" style="background:${DOTCOL[occ.color]}"></span><span class="gchip-name" style="color:${TXTCOL[occ.color]}">${occ.name}</span>`;
+          ch.onclick=()=>openEdit(occ.key);
+          cell.appendChild(ch);
+        });
+      }
+      wk.appendChild(cell);
+    }
+    gb.appendChild(wk);
+  }
+  el.appendChild(gb);
+}
+
+// MODAL
+function openEdit(key){
+  editingId=key; modalMode='edit';
+  const occ=getOccs(curYear,curMonth).find(o=>o.key===key);
+  if(!occ)return;
+  document.getElementById('modal-title').textContent=occ.name;
+  document.getElementById('e-name').value=occ.name;
+  document.getElementById('e-tema').value=occ.tema||'';
+  document.getElementById('e-lang').value=occ.lang;
+  document.getElementById('e-start').value=occ.startCET||'';
+  document.getElementById('e-end').value=occ.endCET||'';
+  document.getElementById('e-color').value=occ.color;
+  document.getElementById('btn-del').style.display='';
+  document.getElementById('overlay').classList.add('open');
+}
+function openAdd(day,month,year){
+  modalMode='add'; addCtx={day,month,year};
+  document.getElementById('modal-title').textContent='Neues Ereignis – '+day+'. '+MN[month];
+  document.getElementById('e-name').value='';
+  document.getElementById('e-tema').value='';
+  document.getElementById('e-lang').value='Português';
+  document.getElementById('e-start').value='20:00';
+  document.getElementById('e-end').value='';
+  document.getElementById('e-color').value='guido';
+  document.getElementById('btn-del').style.display='none';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');editingId=null;}
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function saveEvent(){
+  const name=document.getElementById('e-name').value.trim();
+  const tema=document.getElementById('e-tema').value.trim();
+  const lang=document.getElementById('e-lang').value;
+  const start=document.getElementById('e-start').value;
+  const end=document.getElementById('e-end').value;
+  const color=document.getElementById('e-color').value;
+  if(modalMode==='edit'&&editingId){
+    const eid=overrides[editingId]?.eventId||editingId.split('-')[3];
+    overrides[editingId]={...(overrides[editingId]||{}),name,tema,lang,startCET:start,endCET:end,color,year:curYear,month:curMonth,eventId:eid};
+  } else if(modalMode==='add'&&addCtx){
+    const{day,month,year}=addCtx;
+    const cid='c'+Date.now();
+    events.push({id:cid,name,tema,lang,color,startCET:start,endCET:end,freq:'none'});
+    const nk=`${year}-${month}-${day}-${cid}`;
+    overrides[nk]={key:nk,date:day,month,year,eventId:cid,name,tema,lang,color,startCET:start,endCET:end};
+  }
+  save();render();closeModal();
+}
+function deleteEvent(){
+  if(!editingId)return;
+  overrides[editingId]={...(overrides[editingId]||{}),deleted:true};
+  save();render();closeModal();
+}
+
+renderLegend();
+render();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw_kalender.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
