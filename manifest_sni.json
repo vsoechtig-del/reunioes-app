@@ -1,0 +1,17 @@
+{
+  "name": "SNI Jovens Europa – Planejador",
+  "short_name": "SNI Jovens",
+  "description": "Planejador de temas SNI Jovens Europa",
+  "start_url": "sni_jovens_planner.html",
+  "display": "standalone",
+  "background_color": "#faf8f4",
+  "theme_color": "#C0392B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='38' fill='%23C0392B'/%3E%3Ctext y='140' x='96' text-anchor='middle' font-size='110' font-family='serif'%3E🕊%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

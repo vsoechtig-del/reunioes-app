@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1c1917">
+<title>Reuniões Apps</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, sans-serif; background: #faf8f4; color: #1c1917; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+p { font-size: 14px; color: #78716c; margin-bottom: 2rem; text-align: center; }
+.cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 340px; }
+.card { display: block; text-decoration: none; border-radius: 16px; padding: 20px 24px; color: white; }
+.card h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.card p { font-size: 13px; opacity: 0.8; color: white; margin: 0; }
+.card-kal { background: #1c1917; }
+.card-sni { background: #C0392B; }
+.hint { margin-top: 2rem; font-size: 12px; color: #aaa; text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>📱 Reuniões Apps</h1>
+<p>Tippe auf eine App und füge sie zum Startbildschirm hinzu</p>
+<div class="cards">
+  <a class="card card-kal" href="reuniao_kalender.html">
+    <h2>📅 Reuniões Kalender</h2>
+    <p>Interaktiver Kalender · Agenda · CET & GMT</p>
+  </a>
+  <a class="card card-sni" href="sni_jovens_planner.html">
+    <h2>🕊 SNI Jovens Europa</h2>
+    <p>Themen-Planejador · Drag & Drop</p>
+  </a>
+</div>
+<p class="hint">Safari: Teilen → „Zum Startbildschirm"<br>um die App zu installieren</p>
+</body>
+</html>
